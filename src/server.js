@@ -11,7 +11,7 @@ app.use(cors());
 
 app.use(
   pino({
-    level: 'information',
+    level: 'info',
     transport: {
       target: 'pino-pretty',
       options: {
