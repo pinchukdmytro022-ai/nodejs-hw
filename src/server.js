@@ -1,6 +1,7 @@
 import dns from 'node:dns';
 dns.setServers(['8.8.8.8', '8.8.4.4']);
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import {connectMongoDB} from './db/connectMongoDB.js';
