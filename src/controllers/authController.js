@@ -4,7 +4,6 @@ import createHttpError from 'http-errors';
 import { createSession, setSessionCookies } from '../services/auth.js';
 import { Session } from '../models/session.js';
 
-
 export const registerUser = async (req, res) => {
   const { email, password } = req.body;
   const existingUser = await User.findOne({ email });
@@ -12,7 +11,10 @@ export const registerUser = async (req, res) => {
     throw createHttpError(400, 'Email already in use');
   }
   const hashedPassword = await bcrypt.hash(password, 10);
-  const newUser = await User.create({ email, password: hashedPassword });
+  const newUser = await User.create({
+    email,
+    password: hashedPassword,
+  });
   const newSession = await createSession(newUser._id);
   setSessionCookies(res, newSession);
   res.status(201).json(newUser);
@@ -36,13 +38,16 @@ export const loginUser = async (req, res) => {
 
 export const logoutUser = async (req, res) => {
   const { sessionId } = req.cookies;
-  if (!sessionId) {
+
+  if (sessionId) {
     await Session.deleteOne({ _id: sessionId });
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
-    res.clearCookie('sessionId');
-    res.status(204).send();
   }
+
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
+  res.clearCookie('sessionId');
+
+  res.status(204).send();
 };
 
 export const refreshUserSession = async (req, res) => {
@@ -50,11 +55,19 @@ export const refreshUserSession = async (req, res) => {
   if (!sessionId || !refreshToken) {
     throw createHttpError(401, 'No session or refresh token provided');
   }
-  const session = await Session.findOne({ _id: sessionId, refreshToken });
+
+  const session = await Session.findOne({
+    _id: sessionId,
+    refreshToken,
+  });
+
   if (!session) {
     throw createHttpError(401, 'Invalid session or refresh token');
   }
-  const isSessionTokenExpired = session.refreshTokenValidUntil < new Date();
+
+  const isSessionTokenExpired =
+    session.refreshTokenValidUntil < new Date();
+
   if (isSessionTokenExpired) {
     await session.deleteOne();
     res.clearCookie('accessToken');
